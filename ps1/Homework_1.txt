@@ -117,5 +117,25 @@ for file in $(cat index.txt)
  wget http://www1.ncdc.noaa.gov/pub/data/ghcn/daily/$file;   # added the txt file name to the end of the url so that wget know which one we want to download 
 	done
 
+#4 
+#using R markdown
+---
+title: "Problem 4"
+output:
+  word_document: default
+  pdf_document: default
+---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+The height of the water level in Lake Huron fluctuates over time. Here I ’analyze’ the variation using R. I show a histogram of the lake levels for the period 1875 to 1972.
+```{r, fig.width=2.5, fig.height=4}
+hist(LakeHuron)
+```
+
+```{r}
+lowHi <- c(which.min(LakeHuron), which.max(LakeHuron))
+yearExtrema <- attributes(LakeHuron)$tsp[1]-1 + lowHi
+```
 
