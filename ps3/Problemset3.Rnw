@@ -1,0 +1,291 @@
+\documentclass{article}
+\usepackage{geometry}
+\geometry{tmargin=1in, bmargin=1in, lmargin=1in, rmargin=1in}
+\begin{document}
+\title{PS3}
+\author{Mengying Yang}
+\maketitle
+
+\begin{document}
+\section*{Problem 1}
+\subsection*{a)}
+The paper I read is Best Practice for Scientific Computing by Greg Wilson, D.A. Aruliah, C. Titus Brown, Neil P. Chue Hong, and so on. This paper indicated building scientific software should be carefully and seriously to avoid errors happened when, revise, reuse and improve the software. Therefore, the author provides and explains 10 practices that we help as to reduce the probability that error happened. 
+
+I think currently I have used several practices that the author mentioned, such as 'Write programs for People, not Computer' and 'Document Design and Purpose, not mechanics'. I think I need to thanks to the professor who taught me the first course of programming. The professor taught us the good behaviors similar as how the author describe in practice 1 and practice 10 . Although I haven't written very complicated scientific software, but I gain benefit each time when I reviewed my code that I wrote before. Usually, I feel this behavior saved me lots of time on reminding and understanding the code. 
+
+In addition to that, about version control, what I learnt from my personal experience is when it comes to collaborating, version control is important. For example, before the beginning to use google doc, when I wrote documents with my teammates, we often worked on our own task first. In the end, we would sit together and merged the document content. However, this is way less efficient than with version control features google docs provided. As we can track our changes, we don't have to rename our document at the time of our meeting just to track what's the progress we made so far. Also, as we are using git for this course, I can edit the content on one machine and push changes to remote branch then continue working on it with another machine later by simply pulling the change. Without it I would have to store all my changes in an email draft.
+
+I think this suggestions are very useful, but it will take time to get to used them and let them become our behavior. 
+
+
+
+\section*{Problem 2}
+\subsection*{a)}
+This part helps to read the Shakespear's plays txt file on the website and splits each play into a single element and save them into a list. My idea at here is find the number of lines of the begining of the play so that we just need to get all the strings between that two lines
+<<>>=
+#Loading required library
+library(readr)
+library(stringr)
+library(tibble)
+
+URL <- "http://www.gutenberg.org/cache/epub/100/pg100.txt"
+html <- readLines(URL)
+
+#find the number of line of years at the beginning of each play in the whole string vector 
+num <- grep('^[[:digit:]]{4}$', html)   
+
+#delete the sonnet and the last play(the lover's complaints)
+num <- num[2:38]
+
+play <- list() 
+
+#extract all the strings between the number of year of each play so that we can 
+#have the content of each play and save the them into the element i of the play list
+for(i in seq(length(num)-1)){
+  play[[i]] <- html[num[i]:num[i+1]-1]
+}
+head(play[[1]])
+@
+
+
+\section{Problem 2}
+\subsection*{b)}
+
+This part I extract the year and title, count the number of Act and Scene, and extract the body of the Shakespear play start from 'Scene:' and end at 'THE END'
+<<>>=
+
+num_Scene <- 1 : 36
+num_Acts <- 1 : 36
+year <- 1 : 36
+num_bodyst <-1:36
+body <- list()
+title <- 1:36
+
+#This is the function to find the title of each play, basically is finding the first 
+#non-empty string, which  will be the title. write a function because some of the
+#title is one line after year, but some is two line after year 
+
+playtitle <- function(i){
+    t <- 3
+    hvtitle <- TRUE
+    while(hvtitle){
+      title <- play[[i]][t]
+      if(title != ""){
+        hvtitle <- FALSE
+      }
+      t = t + 1
+    }
+    return(title)
+}
+
+
+#There are 36 plays in total, so loop 36 times to get information of each play
+for(i in seq(36)){
+
+  #I found year is in the second line of each play I extract in a) 
+  year[i] <- play[[i]][2]
+  
+  #There are several different format of Scene(eg: Scene 1 or SCENE III ...); Use 
+  #regular expression to represent them; grep and count the number of lines. 
+  num_Scene[i] <- length(grep('(([A][Cc][Tt]\\s*.*)?\\s*SCENE\\s[0-9IVX]{1,4}[\\.]?|Scene\\s[0-9IVX]{1,4}\\.)', play[[i]]))
+  
+  #count the number of Act of assigned play. The method I use at here is count the
+  #Scene 1. The number of Scene 1 should equal to number of Act. Note: However, there
+  #is text mistake in the txt file , there is no Act II Scene I in play 18, which
+  #directly starts from ACT II Scene II.
+  num_Acts[i] <- length(grep('(SCENE\\s[1I][\\.]?$|Scene\\s[1I]\\.)',play[[i]]))
+  
+  #find the number of line of the 'THE END', which actually is the end of the body
+  num_End <- grep('THE END', play[[i]])
+  #find the number of line of the Sence:/SCENE:/SCENE.-,which is start of the body
+  num_bodyst[i] <- grep('(SCENE:|SCENE.-|Scene:)',play[[i]])
+  
+  #use the same method as A to extract body of each play and save them in body list
+  body[[i]] <- unlist(play[[i]][ as.integer(num_bodyst[i]) : num_End])
+  
+  #use playtitle function to find title
+  title[i] <- playtitle(i)
+}
+
+
+year <- as.numeric(year)
+#output
+meta_data <- data.frame(year, title , num_Scene, num_Acts)
+head(body[[1]])
+tail(body[[1]])
+print(meta_data)
+
+
+
+
+@
+
+\section*{Problem 2}
+\subsection*{c)}
+
+This part is to extract actual spoken text by characters. The method I use is: first, find the Character at the beginning of each dialogue and get the number of line. Second, find the following spoken text between the two line I found in first. and paste them togethor and save them.
+<<>>=
+
+# This function extract the number of line of the begining of each character's talk
+# based on the Character name. and then based on the pattern to find the following 
+# spoken text between the two lines. paste them to one chunk
+characterspoken <- function(j){
+
+  num_Char <- grep('(^\\s+[[:upper:]]+([ ][A-Z]+)*\\.\\s*\'?[[:upper:]][^A-Z]|^\\s{2}([1-9]\\.)?[A-Z][a-z]+([ ][A-Z][a-z]+)*\\.[ ]*\'?[A-Z][^A-Z])|THE END', play[[j]])
+  spokentext <- list()
+  i=1
+  for(i in seq(length(num_Char)-1)){
+    dlog <- play[[j]][num_Char[i]: as.integer(num_Char[i+1]-1)]
+    followsent <- grep('^\\s{2,8}[^ ]', dlog)
+    spokentext[[i]] <- paste(dlog[followsent], collapse = ' ')
+  }
+  return(spokentext)   
+}
+
+chunk <- list()
+
+#run the function for each play
+for(j in seq(length(play))){
+  chunk[[j]] <- characterspoken(j)
+}
+
+head(chunk[[1]])
+@
+
+
+\section*{Problem 2}
+\subsection*{d}
+After extract spoken chunks of each play, we can find number of sentence, number of characters, number of chunks, number of words, number of unique words, number of average words. In this part, I used lapply function. 
+<<>>=
+#4)
+#a)#b)#c)#d)
+
+#This function is for extracting  character's name from each chunk.
+extractfunction <- function(playnum){
+  All_spoken_start <- grep('(^\\s+[[:upper:]]+([ ][A-Z]+)*\\.\\s*\'?[[:upper:]][^A-Z]|^\\s{2}[A-Z][a-z]+([ ][A-Z][a-z]+)*\\.[ ]*\'?[A-Z][^A-Z])', playnum, value =TRUE)
+  All_Char_name <- str_extract_all(All_spoken_start, '^\\s*[[:upper:]]+([ ][A-Z]+)*\\.|^\\s{2}[A-Z][a-z]+\\.')
+  All_Char_name <- str_extract_all(All_Char_name, '[[:upper:]]+([ ][A-Z]+)*\\.|[A-Z][a-z]+\\.')
+  return(unlist(All_Char_name))
+}
+
+Num_Charactor <- 1:36
+Num_Chunks <- 1:36
+Num_Scentence <- 1:36
+Num_word <- 1:36
+Ave_word <- 1:36
+Num_unique_word <-1:36
+
+# run for each play
+for(i in seq(length(play))){
+  
+  #count the number of charactor
+  Num_Charactor[i] <- length(unique(lapply(chunk[[i]], extractfunction)))
+  
+  #count the number of chunks
+  Num_Chunks[i] <- length(chunk[[i]])
+  
+  #count the number of sentence. I split the charactor string based on '.', '!', '?'
+  Num_Scentence[i] <-  length(unlist(lapply(chunk[[i]], strsplit, split = "[.!?]"))) - Num_Chunks[i]
+  
+  #count the number of words. I extract all the words first (eg. Mengying's count as 1 word. "I'll" count as two words)
+  Num_word[i] <- length(unlist(lapply(chunk[[i]], str_extract_all, pattern = '[A-Z:a-z]+(\'[a-z])?')))# - length(unlist(lapply( extractfunction(chunk[[i]]), str_extract_all, pattern = '[A-Z:a-z]+')))
+  
+  #calculate average words. total words/ number of chunks
+  Ave_word[i] <- Num_word[i]/Num_Chunks[i]
+  
+  #count unique words. extract all the word , let all of themm become uppercase
+  #and use unique function to find the unique words
+  Num_unique_word[i] <- length(unique(toupper(unlist(lapply(chunk[[i]], str_extract_all, pattern = '[A-Z:a-z]+(\'[a-z])?')))))
+}
+  
+  #create a dataframe contain all of the values  
+  table <- data.frame(year, num_Acts, num_Scene, Num_Charactor, Num_Chunks, Num_word, Num_Scentence, Ave_word, Num_unique_word)
+  print(table)
+@
+
+\section*{Problem 2}
+\subsection*{e)}
+<<>>=
+#e)
+  par(mfrow = c(2,2))
+  # remove the fourth, because the fourth is not correct
+  plottable <- table[c(1:3,5:36),]
+  plot(plottable$year, plottable$num_Scene)
+  plot(plottable$year, plottable$Num_Charactor)
+  plot(plottable$year, plottable$Num_Chunks)
+  plot(plottable$year, plottable$Num_Scentence)
+  plot(plottable$year, plottable$num_Acts)
+  plot(plottable$year, plottable$Num_word)
+  plot(plottable$year, plottable$Ave_word)
+  plot(plottable$year, plottable$Num_unique_word)
+  
+ 
+@
+Besides the Act are remained the same overtime, number of word have a not very obevious pattern going down a little bit, rest of the graphs, I cannot detect any pattern. Therefore, we cannot conclude anything.
+
+\section*{Problem 3}
+\subsection{a)}
+This part I define Shakespeare's plays class. The class name is Shakespeare. 
+<<eval=FALSE>>=
+
+library(methods)
+  setClass("Shakespeare", representation(
+    #The field of this class are year, title, Scene, act, author and body
+    #the kind of each field are decribe in the following code:
+    year = "numeric",
+    title = "character",
+    Scene = "vector",
+    act = "integer",
+    author = "character",
+    body = "list"
+    
+    #prototype =
+    )
+  )
+    #this part is used to check if the particular field is valid or not
+  setValidity("Shakespeare",
+          function(object){
+            if(!(object@year) > 1580 && object@year < 1620)
+              return("error:: Invalid year entered. Year of the play must between 1580 and 1620")
+            if(grepl('(Shakespeare|shakespeare)',object@author))
+              return("error:: Author of the play has to be Shakespeare")
+            return(TRUE)
+          }
+  )
+  @
+  There are lots of methods Shakespeare could have. I set two method at here. The first is for counting the total number of words in the play. The second is for creating a information vector based on the object. The vector contain the year, title and number of Act. The method also could be counting the total number of characters as we did before, the function in the method could be similar with the 'extractfunction' function I created above.
+  
+  \section*{Problem 3}
+  \subsection*{b)}
+  <<eval = FALSE>>=
+  #b)
+  setGeneric("numberofwords", function(objects,...){
+    standardGeneric("numberofwords")
+  })
+  numberofwords.Shakespeare <- function(object){
+    num_words <- length(unlist(lapply(object@body, str_extract_all, pattern = '[A-Z:a-z]+(\'[a-z])?')))
+    cat(object@author,"'s ",objec@title,"has", num_words, "words")
+  }
+  setMethod(numberofwords, signature = c("Shakespeare"),
+            definition = numberofwords.Shakespeare)
+  #the input argument in this method should be the object belong to the class 
+  #the output is print the a string with number of total words
+  # no field will be modified
+  
+  playvector.Shakespeare <- function(object){
+    playvector <- 1:3
+    playvector[1] <- object@title
+    playvector[2] <- object@year
+    playvector[3] <- objecactt@
+    cat(playvector)
+  }
+  setMethod(playvector, signature = c("Shakespeare"),
+            definition = playvector.Shakespeare)
+  #the input argument in this method should be the object belong to the class 
+  #the output is print the vector with number of total words
+  # no field will be modified
+  
+play1 <- new("Shakespeare", year = 1603,  title = "ALLS WELL THAT ENDS WELL", Scene = 23, chunk = 920 )
+@
+
+\end{document}
