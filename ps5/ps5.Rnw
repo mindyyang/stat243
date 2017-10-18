@@ -1,0 +1,131 @@
+\documentclass{article}
+\usepackage{color}
+\usepackage[english]{babel}
+\usepackage{listings}
+\usepackage{natbib}
+\usepackage[unicode=true]{hyperref}
+\usepackage{geometry}
+\geometry{tmargin=1in, bmargin=1in, lmargin=1in, rmargin=1in}
+
+\begin{document}
+\title{PS4}
+\author{Mengying Yang}
+\maketitle
+
+
+\section*{Problem 2}
+\textbf{part a)}\\
+1 \quad in base 2 is 0 01111111111 0000000000000000000000000000000000000000000000000000\\
+\qquad double: \boldmath{$(-1)^0\times 1\times 2^{(1023-1023)}$} \\
+2 \quad in base 2 is 0 10000000000 0000000000000000000000000000000000000000000000000000\\
+\qquad double: $(-1)^0\times 1\times 2^{(1024-1023)}$\\
+3 \quad in base 2 is 0 10000000000 1000000000000000000000000000000000000000000000000000\\
+\qquad  double: $(-1)^0\times 1.1\times 2^{(1024-1023)}$\\
+4 \quad $(-1)^0\times 1\times 2^{(1025-1023)}$\\
+5 \quad $(-1)^0\times 1.01\times 2^{(1025-1023)}$\\
+...\\
+$2^{53}-2$\quad  0 10000110011 1111111111111111111111111111111111111111111111111110\\
+\quad        $(-1)^0\times 1.1111111111111111111111111111111111111111111111111110 \times 2^{(1075-1023)}$\\
+$2^{53}-1$\quad 0 10000110011 1111111111111111111111111111111111111111111111111111\\
+\quad        $(-1)^0\times 1.1111111111111111111111111111111111111111111111111111\times 2^{(1075-1023)}$\\
+
+<<>>=
+library(pryr)
+bits(1)
+bits(2)
+bits(3)
+bits(4)
+bits(2^53-2)
+bits(2^53-1)
+@
+\textbf{part b)}\\
+$2^{53}$ \quad in base 2 is 0 10000110100 0000000000000000000000000000000000000000000000000000\\
+  double: \quad   $(-1)^0\times 1\times 2^{(1076-1023)}$\\
+$2^{53}+1$ \quad in base 2 is 0 10000110100 0000000000000000000000000000000000000000000000000000\\
+double: $(-1)^0\times 1\times 2^{(1076-1023)}$\\
+\\
+\textbf{because there are 52-precision-number stored, but when a integer more than $2^{53}$ will need 53-precision-number to store. The last digit will be rounded. Therefore, the abusolute spacing for this magnitude will be $2^{53}\times (2 ^{-52})=2$. That's why $2^{53}$ cannot be represent exactly.}\\
+\\
+$2^{53}+2$ \quad  in base 2 is 0 10000110100 0000000000000000000000000000000000000000000000000001\\
+double:\quad  $(-1)^0\times 1.0000000000000000000000000000000000000000000000000001\times 2^{(1076-1023)}$\\
+\\
+
+<<>>=
+options(digits = 22)
+2^53+2
+2^53
+2^53+1
+2^53+2-(2^53+1) # The spacing of this magnitude is 2
+.Machine$double.eps*(2^53+1)
+bits(2^53)
+bits(2^53+1)
+bits(2^53+2)
+@
+\textbf{part c)}\\
+\textbf{because there are 52-precision-number stored, but when a integer more than $2*{54}$ will need 54-precision-number to store. The last two digits don't have a space to store therefore they will be rounded. The abusolute spacing for integer more than $2^{54}$ will be $2^{54}\times (2 ^{(-52)})=4$.}\\
+\\
+$2^{54}$ in base 2 is 0 10000110101 0000000000000000000000000000000000000000000000000000\\
+double: $(-1)^0\times 1\times 2^{(1077-1023)}$\\
+$2^{54}+1$ in base 2 is 0 10000110101 0000000000000000000000000000000000000000000000000000\\
+(only have 52 precision-number, so the $+1$ at here cannot be represent)\\
+double: $(-1)^0\times 1\times 2^{(1077-1023)}$\\
+
+<<>>=
+.Machine$double.eps*(2^54)
+.Machine$double.eps*(2^54+1)
+.Machine$double.eps*(2^54+2)
+bits(2^54)
+bits(2^54+1)
+@
+
+\section*{Problem 3}
+<<>>=
+options(digits = 10)
+library(data.table)
+library(microbenchmark)
+Integervector <- 1:10000
+numericvector <- Integervector /5.55
+microbenchmark(copy(Integervector))
+microbenchmark(copy(numericvector))
+
+@
+Yes, copying a large integer vector is faster copying a same size numeric vector. 
+
+<<>>=
+microbenchmark(sample(Integervector,5000))
+microbenchmark(sample(numericvector,5000))
+@
+They use about the same time.
+
+\section*{Problem 4}
+\subsection*{a)}
+It might be better to break up Y into p blocks rather than n individual conlumn-wise computation because the following reasons:\\
+1) Usually the avaiable cores to help us calculate is less than n, the more effecient way is to use the fixed number of cores avaiable on our computers as to split up the tasks.\\
+2) This is a tradeoff problem. Although seperate the matrix to n part to calculate will save the time of waiting to calculate when we seperate to p parts, communications cost between each thread are also time-comsuming. Sometimes, maybe the waiting time is less than the communication time if we break up tasks to too many part.\\
+Therefore, breaking up to p parts usually is better than using single core and is also better than breaking into n parts individual column in this situation.\\
+
+\subsection*{b)}
+\textbf{1}\\
+The memory for approach A uses is store $(n\times n + n\times m)\times p + n\times m\times p = n^2p + 2n^2$ numbers\\
+($(n\times n + m\times p)\times p$ is number when doing calculation, $n\times m\times p=n\times n$ is memory to save result)\\
+
+The memory for approach B uses is store $(m\times n+n\times m+ m\times m)\times p= 2n^2 + n\times m $ numbers\\
+
+\textbf{2}\\
+The total number of pass to the workers for Approach A and B are $(n\times n + n \times m + n \times m)\times p = n^2p + 2n^2$ and $(n\times m + n \times m + m \times m)\times p \times p = 2n^2p + n^2$ respectively
+
+\textbf{Approach B} is better for minimzing memory usage.\\
+\textbf{Approach A} is better for minimzing communication\\
+
+\section*{Extra Credit}
+<<>>=
+bits(0.25)
+bits(0.04)
+bits(0.39)
+0.25+0.04 == 0.39
+@
+\textbf{
+This related to the how these numbers represented by binary. If the two numbers' binary sum more than 52 digits and the 53th digits is one, then the number will round up, if not then the number will be truncated. Therefore, it will depend on the summation of the binary of the two numbers.  So some pattern is hard to find.
+Beyond that, When the number is 2 to the power of an integer(0.5 is; 0.1, 0,2,0.3 are not), then the number can be represent in R exactly.} 
+For 0,1, 0.2, 0.3, they are rounded to the nearest number and when they add to a power of 2, their magnitude error space is same. For example, When 0.2 + 0.3, 0.2 round up one error space and 0.3 round down one error space, when they add together the positive spacing error plus negative spacing error who cancel each other and get the exact 0.5.
+\end{document}
