@@ -1,0 +1,33 @@
+Mengying Yang
+Problem 1
+1. The goal of their simulation study is to demonstrate the 
+likelihood ratio statistic is converge to a weighted sum of 
+independent chi-square distribution. They test the number of 
+their components in a normal mixture distribution (a single 
+normal versus a two component mixture versus three-component 
+mixture normal distribution). The metrics they consider in 
+assessing their methods is using EM algorithm with 100 sets 
+in MLE and also are listed as (8)-(12) in the article.
+
+2. The choices the authors must make in designing their simulation
+ study are determine an appropriate sample size and nominal value, 
+the null hypothesis and assumption, and the mixing proportion. The
+ key aspects of the data generating mechanism that likely affect 
+the statistical power of test are how well the sample was generated
+ from the distribution and if the sample are independent.
+
+3.  Yes, I do think their tables do a good job of presenting the 
+simulation results. However, I think if we can make some graph to
+ show the patter would be better. 
+
+4. The table only make sense in certain circumstance. Table 2
+ demonstrate when n is smaller than 200. When D=1 or D= 2 the
+ power is small. When D = 3, the power is higher than other 
+situation and there is no strong evidence the power will depend
+ on the mixing proportion. Table 4 shows when 1000 replications 
+with mixing proportion pi =0.3 and 0.4.
+
+5. I think the 10 times simulation is not enough, it will cause 
+the error large.  However, when the number of simulation too large,
+ then the cost will be too much. Therefore, I think 1000 simulation is 
+a good tradeoff.
