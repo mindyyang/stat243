@@ -1,0 +1,272 @@
+\documentclass{article}
+\usepackage{geometry}
+\geometry{tmargin=1in, bmargin=1in, lmargin=1in, rmargin=1in}
+\begin{document}
+\title{PS8}
+\author{Mengying Yang}
+\maketitle
+
+\section*{Problem 1}
+\subsecrtion*{a)}
+
+To know if Pareto decay more quickly or not than exponantial distribution, we have \(exp(x) = \lambda e^{-\lambda x}\) and \(fPareto(x) = \frac{\beta \alpha ^\beta}{x^{\beta+1}}I\{\alpha<x\}\). Therefore 
+
+
+$\lim_{x \to \infty}\frac{exp(x)}{fPareto(x)} &= \lim_{x \to \infty}\frac{\lambda e^{-\lambda x}}{\frac{\beta \alpha ^\beta}{x^{\beta+1}}}\\$
+
+
+As we can see numerator and denominator are 0 when x goes to infinity, so we can apply the L'Hospital's rule. We need to do is differentiate the numerator and differentiate the denominator and then take the limit. We can find the numerator(\lamda) is a constant and the denominator goes to infinity,
+
+
+$\lim_{x \to \infty}\frac{exp(x)}{fPareto(x)} &= \lim_{x \to \infty} \frac{\lambda}{\lambda^{\beta + 1}\beta \alpha^{\beta}e^{\lambda x}}=0\\$
+
+
+Thus, the tail of the Pareto decay more slowly than that of an exponential distribution.
+
+\section*{Problem1}
+\subsection*{b)}
+<<>>=
+library(EnvStats)
+#Estimate E(X) and E(X^2) when m = 10000
+ParetoSample <- rpareto(10000,location = 2, shape = 3)
+weight <- dexp(ParetoSample-2)/dpareto(ParetoSample,location =2,shape =3)
+X <- weight*ParetoSample
+#Expectation of X, should close to 3
+mean(X)
+X_Square <- weight*ParetoSample^2
+##Expectation of X_Square, should close to 10
+mean(X_Square)
+
+@
+For exponetial distibution with parameter \lamda=1 and shift by 2. E(X) = 1 + 2 =3 and Variance remain the same. Therefore, the $E(X^{2}) = Var(X) + E(X^{2})= 1+9=10$
+<<>>=
+# Histogram of h(x)f(x)/g(x) 
+hist(X, xlab = "h(x)f(x)/g(x)", main="The histogram of x*f(x)/g(x)for EX")
+hist(X_Square, xlab = "h(x)f(x)/g(x)", main="The histogram of expression( h(x)*f(x)/g(x)for EX^2")
+
+#the weight f(x)/g(x)
+hist(weight, xlab = "f(x)/g(x)", main= "weights")
+@
+As we can see from the histogram, the weights lie in the interval (0.5,1.5) and rest few lie in (0,0.5). Therefore, there is no strong influence on the estimated h(X)
+
+\subsection*{c)}
+<<>>=
+#we exchange the f and g
+#Estimate E(X) and E(X^2) when m = 10000
+ExponetialSample <- rexp(10000) + 2
+weight_new <- dpareto(ExponetialSample,location =2,shape =3)/dexp(ExponetialSample-2)
+X_new <- weight_new*ParetoSample
+#Expectation of X, should close to 3
+mean(X_new)
+X_Square_new <- weight_new*ParetoSample^2
+##Expectation of X_Square, should close to 10
+mean(X_Square_new)
+
+# Histogram of h(x)f(x)/g(x) 
+hist(X_new, xlab = "h(x)f(x)/g(x)", main="The histogram of x*f(x)/g(x)")
+hist(X_Square_new, xlab = "h(x)f(x)/g(x)", main="The histogram of expression(x^2*f(x)/g(x)")
+
+#the weight f(x)/g(x)
+hist(weight_new, xlab = "f(x)/g(x)", main= "histogram of weights")
+
+@
+From the histogram we can find the very strong variance of the weights and it influences the estimated h(X) indirectly. Because the exponential distribution has fast decaying tail(lighter tail), the variance becomes large when we sampling from exponetial distribution.
+
+\section*{Problem 2}
+<<>>=
+theta <- function(x1,x2) atan2(x2, x1)/(2*pi)
+
+f <- function(x) {
+  f1 <- 10*(x[3] - 10*theta(x[1],x[2]))
+  f2 <- 10*(sqrt(x[1]^2 + x[2]^2) - 1)
+  f3 <- x[3]
+  return(f1^2 + f2^2 + f3^2)
+}
+# fix one variable, the other two range from -5 to 5
+# fixed the first variable as constant
+Fixed_1 <- function(y,z){
+  return(f(c(1,y,z)))
+}
+#to make the Fixed_1 able to calculate, we need to use vecterize
+vectorized <- Vectorize(Fixed_1 ,vectorize.args = c("y","z"))
+matrix_1<- outer(-5:5, -5:5, vectorized)
+
+#dataframe_1 <- data.frame(expand.grid(x=-5:5, y=-5:5),value = c(t(matrix_1)))
+
+#plots of a surface over the y-z plane
+persp(matrix_1, phi = 45, zlab = "fixedvalue", xlab ="y", ylab = "z")
+# making a contour plot
+contour(matrix_1,  xlab ="y", ylab = "z", main ="contour plot of fix first variable")
+
+
+# fixed the second variable as constant
+Fixed_2 <- function(x,z){
+  return(f(c(x,1,z)))
+}
+#to make the Fixed_1 able to calculate, we need to use vecterize
+vectorized <- Vectorize(Fixed_2 ,vectorize.args = c("x","z"))
+matrix_2<- outer(-5:5, -5:5, vectorized)
+
+#plots of a surface over the y-z plane
+persp(matrix_2, phi = 45, zlab = "fixedvalue", xlab ="y", ylab = "z")
+# making a contour plot
+contour(matrix_2,  xlab ="x", ylab = "z", main ="contour plot of fix second variable")
+
+# fixed the third variable as constant
+Fixed_3 <- function(x,y){
+  return(f(c(x,y,1)))
+}
+#to make the Fixed_1 able to calculate, we need to use vecterize
+vectorized <- Vectorize(Fixed_3 ,vectorize.args = c("x","y"))
+matrix_3<- outer(-5:5, -5:5, vectorized)
+
+#plots of a surface over the y-z plane
+persp(matrix_3, phi = 45, zlab = "fixedvalue", xlab ="y", ylab = "z")
+# making a contour plot
+contour(matrix_3,  xlab ="x", ylab = "y", main ="contour plot of fix second variable")
+@
+From above plot we can find that if we fix one variable to 1, the function tend to increases as the rest two variables' absolute values increase. However, near the center of the two unfixed variable, the function are usually to be small.
+<<>>=
+#minimum by optim function.
+optim(c(1,1,1), f)$par
+optim(c(0,1,0), f)$par
+optim(c(0,0,1), f)$par
+optim(c(0,0,0), f)$par
+optim(c(-1,-1,-1), f)$par
+optim(c(-5,-5,-5), f)$par
+optim(c(0.6,0.6,0.6), f)$par
+@
+<<>>=
+## problem 3
+
+set.seed(1)
+n <- 100
+beta0 <- 1
+beta1 <- 2
+sigma2 <- 6
+
+x <- runif(n)
+yComplete <- rnorm(n, beta0 + beta1*x, sqrt(sigma2))
+
+## parameters chose such that signal in data is moderately strong
+## estimate divided by std error is ~ 3
+mod <- lm(yComplete ~ x)
+summary(mod)$coef
+
+set.seed(0)
+initial <- runif(3,-50, 50)
+optim(par = initial, fn = f, control = list(trace= TRUE))
+optim(par = initial, fn = f, control = list(trace= TRUE), method = 'BFGS' )
+nlm(f, p= initial)
+@
+\section*{Problem 3}
+\subsection*{b)}
+In order to find a reasonable starting value, we can ingore the censored data and run the regression of the uncensored values. We used the  estimated parameter we got from the regression as our starting values.
+
+\subsection*{c)}
+<<>>=
+set.seed(1)
+n <- 100
+beta0 <- 1
+beta1 <- 2
+sigma2 <- 6
+
+x <- runif(n)
+yComplete <- rnorm(n, beta0 + beta1*x, sqrt(sigma2))
+
+
+
+## parameters chose such that signal in data is moderately strong
+## estimate divided by std error is ~ 3
+mod <- lm(yComplete ~ x)
+summary(mod)$coef
+summary(mod)$sigma
+
+
+ycomplete1 <- yComplete
+
+
+myfunction <- function(x, y, p, criteria){
+  #censore the data based on the percentile we want to use 
+  ycomplete1[yComplete > quantile(yComplete, p)] <- unname(quantile(yComplete, p))
+  #calculate the initial parameter value
+  initial <- lm(ycomplete1~x)
+  beta1 <- unname(initial$coefficients[2])
+  beta0 <- unname(initial$coefficients[1])
+  sigma <- summary(initial)$sigma
+  n <- length(yComplete)
+  
+  # Threshold
+  tau <- unname(quantile(yComplete, p)) 
+  difference = 10
+  i = 0
+  while( difference > criteria){
+    #print(c(beta1,beta0,sigma, i))
+    # Calculate expected value and variance of truncated normal distribution
+    mu <- beta0 + beta1*x
+    tau2 <- (tau - mu) / sigma
+    rho <- dnorm(tau2) / (1 - pnorm(tau2))
+    Expectation <- mu + sigma*rho
+    Var <- sigma^2 *(1 + tau2*rho - (rho)^2)
+    
+    #step of maximization
+    ycomplete1[yComplete > tau]<- Expectation[yComplete > tau]
+    #Do the regression again after the modification to calculate the coefficient beta
+    Update <- lm(ycomplete1 ~ x)
+    beta1_new <- unname(Update$coefficients[2])
+    beta0_new <- unname(Update$coefficients[1])
+    sigma_new <- sqrt(sum(Var[yComplete > tau])/n + sum((ycomplete1 - beta0_new - beta1_new * x)^2)/n)
+    
+    #calculate the difference of the parameter to check if the parameter converge
+    diff_beta1 <- abs(beta1 - beta1_new)
+    diff_beta0 <- abs(beta0 - beta0_new)
+    diff_sigma <- abs(sigma - sigma_new)
+    
+    difference <- (diff_beta1 + diff_beta0 + diff_sigma) 
+    
+    #assign the new parameter to the parameter will be used in next iteration
+    beta1 <- beta1_new
+    beta0 <- beta0_new
+    sigma <- sigma_new
+    
+    i = i + 1
+    
+    
+    
+  }
+  return(c(beta0_new, beta1_new, sigma_new, i-1))
+}
+
+result1 <- myfunction(x,y,0.2,0.00000001)
+cat("Beta0: ",result1[1],'Beta1: ', result1[2], 'sigma: ', result1[3], 'iteration: ', result1[4])
+result2 <- myfunction(x,y,0.8,0.00000001)
+cat("Beta0: ",result2[1],'Beta1: ', result2[2], 'sigma: ', result2[3], 'iteration: ', result2[4])
+
+@
+The complete data's beta0, beta1, and sigma are 0.5607422, 2.7650812, and 2.305117 respectively. when a modest 20 percent proportion of exceedances expected, beta0, beta1, and sigma are 0.3126394, 2.87922, and 1.960093 respectively. I did 208 times iteration. when a high 80 percent proportion of exceedances expected, beta0, beta1, and sigma are 0.4566128, 2.824108,2.149157 respectively. I only did 16 times iteration. I choose the difference criteria as 0.0000001, becuase I think it small enough.
+
+\subsection*{d)}
+
+
+<<EVAL= FALSE>>=
+
+myfunction_logL  <- function(x, y, p=0.8){
+  ycomplete1[yComplete > quantile(yComplete, p)] <- unname(quantile(yComplete, p))
+  #calculate the initial parameter value
+  initial <- lm(ycomplete1~x)
+  beta1 <- unname(initial$coefficients[2])
+  beta0 <- unname(initial$coefficients[1])
+  sigma <- summary(initial)$sigma
+  n <- length(x)
+  tau <- unname(quantile(yComplete, p))
+  mu <- rep(beta0, n) + beta1*x
+  y <- (yComplete[1:(n*(1-p))] - mu[1:(n*(1-p))]) / sqrt(sigma)
+  return(n*(1-p)*log(sqrt(sigma)) + sum(y^2)/2 - sum(log(1 - pnorm((tau - mu[((n*(1-p))+1):n]) / sqrt(sigma)))))
+}
+  ycomplete1[yComplete > quantile(yComplete, 0.8)] <- unname(quantile(yComplete, 0.8))
+  #calculate the initial parameter value
+  initial <- lm(ycomplete1~x)
+par <- c(unname(initial$coefficients[2]), unname(initial$coefficients[1]),summary(initial)$sigma)
+optim(par, fn = myfunction_logL, method = "BFGS", x = x,y =ycomplete1)
+@
+\end{document}
